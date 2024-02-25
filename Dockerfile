@@ -1,8 +1,30 @@
-FROM golang:latest
-MAINTAINER Nathan Osman <nathan@quickmediasolutions.com>
+#Stage 1: Build
+FROM golang:1.21-alpine AS BUILD
 
-# Grab the source files and build them
-RUN go get github.com/hectane/hectane
+#Set working directory
+WORKDIR /app
+
+#Copy and download dependencies
+COPY go.mod go.sum ./
+RUN go mod download
+
+#Copy the source code into the buld stage
+COPY . .
+
+#Build
+RUN CGO_ENABLED=0 GOOS=linux go build -o hectane .
+
+#Stage 2: Build image
+FROM alpine:edge
+
+#Set wokring directory
+WORKDIR /app
+
+#Copy binary
+COPY --from=build /app/hectane .
+
+#Set timezone and install CA certs
+RUN apk --no-cache add ca-certificates tzdata
 
 # Set a few configuration defaults
 ENV DIRECTORY=/data \
@@ -11,7 +33,7 @@ ENV DIRECTORY=/data \
         DEBUG=0
 
 # Specify the executable to run
-CMD hectane \
+CMD /app/hectane \
         -tls-cert="$TLS_CERT" \
         -tls-key="$TLS_KEY" \
         -username="$USERNAME" \
