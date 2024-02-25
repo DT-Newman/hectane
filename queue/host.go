@@ -1,8 +1,8 @@
 package queue
 
 import (
+	nbc "github.com/hectane/go-nonblockingchan"
 	"github.com/sirupsen/logrus"
-	"github.com/hectane/go-nonblockingchan"
 
 	"crypto/tls"
 	"errors"
@@ -202,6 +202,11 @@ deliver:
 			}
 		}
 		h.log.Debug("connection established")
+	}
+	//Check if the message has expired
+	if m.expiry.Before(time.Now()) {
+		h.log.Infof("message has with id %q has expired", m.id)
+		goto cleanup
 	}
 	err = h.deliverToMailServer(c, m)
 	if err != nil {

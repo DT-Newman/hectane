@@ -26,6 +26,7 @@ type Email struct {
 	Text        string       `json:"text"`
 	Html        string       `json:"html"`
 	Attachments []Attachment `json:"attachments"`
+	Expiry      time.Time    `json:"expiry"`
 }
 
 // Write the headers for the email to the specified writer.

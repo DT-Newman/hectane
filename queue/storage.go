@@ -10,6 +10,7 @@ import (
 	"path"
 	"strings"
 	"sync"
+	"time"
 )
 
 const (
@@ -19,11 +20,12 @@ const (
 
 // Message metadata.
 type Message struct {
-	id   string
-	body string
-	Host string
-	From string
-	To   []string
+	id     string
+	body   string
+	Host   string
+	From   string
+	To     []string
+	expiry time.Time
 }
 
 // Manager for message metadata and body on disk. All methods are safe to call

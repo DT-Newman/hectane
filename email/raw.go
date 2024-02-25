@@ -1,14 +1,17 @@
 package email
 
 import (
+	"time"
+
 	"github.com/hectane/hectane/queue"
 )
 
 // Raw represents a raw email message ready for delivery.
 type Raw struct {
-	From string   `json:"from"`
-	To   []string `json:"to"`
-	Body string   `json:"body"`
+	From   string    `json:"from"`
+	To     []string  `json:"to"`
+	Body   string    `json:"body"`
+	Expiry time.Time `json:"expiry"`
 }
 
 // DeliverToQueue delivers raw messages to the queue.
