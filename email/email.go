@@ -1,6 +1,8 @@
 package email
 
 import (
+	"encoding/json"
+
 	"github.com/hectane/hectane/queue"
 	"github.com/kennygrant/sanitize"
 
@@ -26,7 +28,33 @@ type Email struct {
 	Text        string       `json:"text"`
 	Html        string       `json:"html"`
 	Attachments []Attachment `json:"attachments"`
-	Expiry      time.Time    `json:"expiry"`
+	Expiry      ExpiryTime   `json:"expiry"`
+}
+
+// Custom unmarshalliing, set default values when not present
+func (e *Email) UnmarshalJSON(data []byte) error {
+
+	type Alias Email
+	tmp := struct {
+		*Alias
+		Expiry *ExpiryTime `json:"expiry"`
+	}{
+		Alias: (*Alias)(e),
+	}
+
+	err := json.Unmarshal(data, &tmp)
+	if err != nil {
+		return err
+	}
+
+	// If no expiry set then set to default
+	if tmp.Expiry == nil {
+		e.Expiry.Time = time.Now().AddDate(0, 0, 1) // default
+	} else {
+		e.Expiry = *tmp.Expiry
+	}
+
+	return nil
 }
 
 // Write the headers for the email to the specified writer.
@@ -91,7 +119,7 @@ func (e *Email) writeBody(w *multipart.Writer) error {
 }
 
 // Create an array of messages with the specified body.
-func (e *Email) newMessages(s *queue.Storage, from, body string) ([]*queue.Message, error) {
+func (e *Email) newMessages(s *queue.Storage, from, body string, et ExpiryTime) ([]*queue.Message, error) {
 	addresses := append(append(e.To, e.Cc...), e.Bcc...)
 	m, err := GroupAddressesByHost(addresses)
 	if err != nil {
@@ -100,9 +128,10 @@ func (e *Email) newMessages(s *queue.Storage, from, body string) ([]*queue.Messa
 	messages := make([]*queue.Message, 0, 1)
 	for h, to := range m {
 		msg := &queue.Message{
-			Host: h,
-			From: from,
-			To:   to,
+			Host:   h,
+			From:   from,
+			To:     to,
+			Expiry: et.Time,
 		}
 		if err := s.SaveMessage(msg, body); err != nil {
 			return nil, err
@@ -141,5 +170,5 @@ func (e *Email) Messages(s *queue.Storage) ([]*queue.Message, error) {
 	if err := w.Close(); err != nil {
 		return nil, err
 	}
-	return e.newMessages(s, from.Address, body)
+	return e.newMessages(s, from.Address, body, e.Expiry)
 }

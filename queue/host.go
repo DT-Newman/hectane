@@ -182,7 +182,7 @@ receive:
 		if m == nil {
 			goto shutdown
 		}
-		h.log.Info("message received in queue")
+		h.log.Infof("message received in queue assigned id %q", m.id)
 	}
 	hostname, err = h.parseHostname(m.From)
 	if err != nil {
@@ -204,8 +204,8 @@ deliver:
 		h.log.Debug("connection established")
 	}
 	//Check if the message has expired
-	if m.expiry.Before(time.Now()) {
-		h.log.Infof("message has with id %q has expired", m.id)
+	if m.Expiry.Before(time.Now()) {
+		h.log.Infof("message %q has expired (%s)", m.id, m.Expiry)
 		goto cleanup
 	}
 	err = h.deliverToMailServer(c, m)

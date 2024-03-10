@@ -1,6 +1,8 @@
 package queue
 
 import (
+	"time"
+
 	"github.com/pborman/uuid"
 
 	"encoding/json"
@@ -10,7 +12,6 @@ import (
 	"path"
 	"strings"
 	"sync"
-	"time"
 )
 
 const (
@@ -25,7 +26,7 @@ type Message struct {
 	Host   string
 	From   string
 	To     []string
-	expiry time.Time
+	Expiry time.Time
 }
 
 // Manager for message metadata and body on disk. All methods are safe to call

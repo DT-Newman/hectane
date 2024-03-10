@@ -1,6 +1,10 @@
 package email
 
 import (
+	"encoding/json"
+	"strings"
+	"time"
+
 	"github.com/hectane/go-attest"
 	"github.com/hectane/hectane/queue"
 
@@ -179,5 +183,31 @@ func TestEmailContent(t *testing.T) {
 	}
 	if err := checkMultipart(m.Body, m.Header.Get("Content-Type"), description); err != nil {
 		t.Fatal(err)
+	}
+}
+
+func TestEmailExpiry(t *testing.T) {
+	tests := []struct {
+		testName       string
+		body           string
+		expectedResult time.Time
+	}{
+		{"Empty", "{}", time.Now().AddDate(0, 0, 1)},
+		{"Null", "{\"expiry\": null}", time.Now().AddDate(0, 0, 1)},
+		{"UTCDateTime", "{ \"expiry\": \"2024-01-02T15:04:05.000+0000\"}", time.Date(2024, 01, 2, 15, 4, 5, 0, time.UTC)},
+	}
+
+	for _, test := range tests {
+		t.Run(test.testName, func(t *testing.T) {
+
+			result := Email{}
+			if err := json.NewDecoder(strings.NewReader(test.body)).Decode(&result); err != nil {
+				t.Fatal(err)
+			}
+			if !result.Expiry.Time.Truncate(time.Hour).Equal(test.expectedResult.Truncate(time.Hour)) {
+				t.Errorf("the field was parsed to %v and does not match the expected parsed time of %v", result.Expiry.Time, test.expectedResult)
+			}
+
+		})
 	}
 }
