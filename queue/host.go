@@ -204,9 +204,11 @@ deliver:
 		h.log.Debug("connection established")
 	}
 	//Check if the message has expired
-	if m.Expiry.Before(time.Now()) {
-		h.log.Infof("message %q has expired (%s)", m.id, m.Expiry)
-		goto cleanup
+	if h.config.EmailExpiry {
+		if m.Expiry.Before(time.Now()) {
+			h.log.Infof("message %q has expired (%s)", m.id, m.Expiry)
+			goto cleanup
+		}
 	}
 	err = h.deliverToMailServer(c, m)
 	if err != nil {

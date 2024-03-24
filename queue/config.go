@@ -11,6 +11,7 @@ type DKIMConfig struct {
 type Config struct {
 	Directory              string `json:"directory"`
 	DisableSSLVerification bool   `json:"disable-ssl-verification"`
+	EmailExpiry            bool   `json:"email-expiry"`
 
 	// Map domain names to DKIM config for that domain
 	DKIMConfigs map[string]DKIMConfig `json:"dkim-configs"`
